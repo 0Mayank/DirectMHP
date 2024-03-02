@@ -27,10 +27,9 @@ import torch
 import torchvision
 import yaml
 
-from utils.downloads import gsutil_getsize
-from utils.metrics import box_iou, fitness
-from utils.torch_utils import init_torch_seeds
-
+from downloads import gsutil_getsize
+from metrics import box_iou, fitness
+from torch_utils import init_torch_seeds
 
 # Settings
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
@@ -537,8 +536,8 @@ def clip_coords(boxes, shape):
         boxes[:, [1, 3]] = boxes[:, [1, 3]].clip(0, shape[0])  # y1, y2
 
 
-def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=None, agnostic=False, 
-    multi_label=False, labels=(), max_det=300, num_angles=3):
+def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=None, agnostic=False,
+                        multi_label=False, labels=(), max_det=300, num_angles=3):
     """Runs Non-Maximum Suppression (NMS) on inference results
 
     Returns:
@@ -546,7 +545,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
     """
 
     # nc = prediction.shape[2] - 5  # number of classes
-    nc = prediction.shape[2] - 5 - num_angles # number of classes
+    nc = prediction.shape[2] - 5 - num_angles  # number of classes
     xc = prediction[..., 4] > conf_thres  # candidates
 
     # Checks
@@ -564,7 +563,7 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
 
     t = time.time()
     # output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
-    output = [torch.zeros((0, 6+num_angles), device=prediction.device)] * prediction.shape[0]
+    output = [torch.zeros((0, 6 + num_angles), device=prediction.device)] * prediction.shape[0]
     for xi, x in enumerate(prediction):  # image index, image inference
         # Apply constraints
         # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height

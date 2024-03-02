@@ -1,8 +1,10 @@
+import argparse
+
 import onnx
 import torch
-import argparse
-from utils.torch_utils import select_device
+
 from model import DirectMHPInfer
+from utils.torch_utils import select_device
 
 
 def save_to_onnx(weights, device, conf_threshold=0.7, iou_threshold=0.45, channels=3, image_size=1280,
@@ -30,7 +32,8 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--image-size', type=int, default=1280, help='size of input images')
     parser.add_argument('-c', '--channels', type=int, default=3, help='number of input channels')
     parser.add_argument('-o', '--opset', type=int, default=17, help='opset version')
-    parser.add_argument('-n', '--file_name', type=str, default='DirectMHP', help='name of the model without file extension')
+    parser.add_argument('-n', '--file_name', type=str, default='DirectMHP',
+                        help='name of the model without file extension')
     parser.add_argument('--conf-threshold', type=float, default=0.7, help='confidence threshold')
     parser.add_argument('--iou-threshold', type=float, default=0.45, help='NMS IoU threshold')
 

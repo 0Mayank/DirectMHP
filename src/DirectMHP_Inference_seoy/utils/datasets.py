@@ -25,17 +25,16 @@ from PIL import Image, ExifTags
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from utils.augmentations import Albumentations, augment_hsv, copy_paste, letterbox, mixup, random_perspective
-from utils.general import check_requirements, check_file, check_dataset, xywh2xyxy, xywhn2xyxy, xyxy2xywhn, \
-    xyn2xy, segments2boxes, clean_str
-from utils.torch_utils import torch_distributed_zero_first
+from augmentations import Albumentations, augment_hsv, copy_paste, letterbox, mixup, random_perspective
+from general import check_requirements, check_file, check_dataset, xywh2xyxy, xywhn2xyxy, xyxy2xywhn, \
+    xyn2xy, clean_str
+from torch_utils import torch_distributed_zero_first
 
 # Parameters
 HELP_URL = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 IMG_FORMATS = ['bmp', 'jpg', 'jpeg', 'png', 'tif', 'tiff', 'dng', 'webp', 'mpo']  # acceptable image suffixes
 VID_FORMATS = ['mov', 'avi', 'mp4', 'mpg', 'mpeg', 'm4v', 'wmv', 'mkv']  # acceptable video suffixes
 NUM_THREADS = os.cpu_count()  # number of multiprocessing threads
-
 
 # Get orientation exif tag
 for orientation in ExifTags.TAGS.keys():
@@ -92,8 +91,9 @@ def exif_transpose(image):
     return image
 
 
-def create_dataloader(path, labels_dir, imgsz, batch_size, stride, single_cls=False, hyp=None, augment=False, cache=False, 
-    pad=0.0, rect=False, rank=-1, workers=8, image_weights=False, quad=False, prefix=''):
+def create_dataloader(path, labels_dir, imgsz, batch_size, stride, single_cls=False, hyp=None, augment=False,
+                      cache=False,
+                      pad=0.0, rect=False, rank=-1, workers=8, image_weights=False, quad=False, prefix=''):
     # Make sure only the first process in DDP process the dataset first, and the following others can use the cache
     with torch_distributed_zero_first(rank):
         dataset = LoadImagesAndLabels(path, labels_dir, imgsz, batch_size,
@@ -373,8 +373,8 @@ def img2label_paths(img_paths, image_dir='images', labels_dir='labels'):
 
 
 class LoadImagesAndLabels(Dataset):  # for training/testing
-    def __init__(self, path, labels_dir='labels', img_size=640, batch_size=16, augment=False, hyp=None, 
-        rect=False, image_weights=False, cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
+    def __init__(self, path, labels_dir='labels', img_size=640, batch_size=16, augment=False, hyp=None,
+                 rect=False, image_weights=False, cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
 
         self.labels_dir = labels_dir
         self.img_size = img_size
@@ -498,8 +498,9 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         nm, nf, ne, nc, msgs = 0, 0, 0, 0, []  # number missing, found, empty, corrupt, messages
         desc = f"{prefix}Scanning '{path.parent / path.stem}' images and labels..."
         with Pool(NUM_THREADS) as pool:
-            pbar = tqdm(pool.imap_unordered(verify_image_label, zip(self.img_files, self.label_files, repeat(prefix), 
-                repeat(self.num_angles))), desc=desc, total=len(self.img_files))
+            pbar = tqdm(pool.imap_unordered(verify_image_label, zip(self.img_files, self.label_files, repeat(prefix),
+                                                                    repeat(self.num_angles))), desc=desc,
+                        total=len(self.img_files))
             for im_file, l, shape, segments, nm_f, nf_f, ne_f, nc_f, msg in pbar:
                 nm += nm_f
                 nf += nf_f
@@ -603,7 +604,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         labels_out = torch.zeros((nl, labels.shape[-1] + 1))
         if nl:
             labels_out[:, 1:] = torch.from_numpy(labels)
-            
+
         # Convert
         img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         img = np.ascontiguousarray(img)
@@ -614,9 +615,9 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
     def collate_fn(batch):
         # img, label, path, shapes = zip(*batch)  # transposed
         # for i, l in enumerate(label):
-            # l[:, 0] = i  # add target image index for build_targets()
+        # l[:, 0] = i  # add target image index for build_targets()
         # return torch.stack(img, 0), torch.cat(label, 0), path, shapes
-        
+
         img, label, path, shapes = zip(*batch)  # transposed
         new_img, new_label, new_path, new_shapes = [], [], [], []
         index = 0  # image id shoud increment by consecutive integers
@@ -862,7 +863,8 @@ def extract_boxes(path='../datasets/coco128', labels_dir='labels'):  # from util
                     assert cv2.imwrite(str(f), im[b[1]:b[3], b[0]:b[2]]), f'box failure in {f}'
 
 
-def autosplit(path='../datasets/coco128/images', weights=(0.9, 0.1, 0.0), annotated_only=False, labels_dir='labels_dir'):
+def autosplit(path='../datasets/coco128/images', weights=(0.9, 0.1, 0.0), annotated_only=False,
+              labels_dir='labels_dir'):
     """ Autosplit a dataset into train/val/test splits and save path/autosplit_*.txt files
     Usage: from utils.datasets import *; autosplit()
     Arguments
@@ -933,7 +935,8 @@ def verify_image_label(args):
         return [None, None, None, None, nm, nf, ne, nc, msg]
 
 
-def dataset_stats(path='coco128.yaml', autodownload=False, verbose=False, profile=False, hub=False, labels_dir='labels'):
+def dataset_stats(path='coco128.yaml', autodownload=False, verbose=False, profile=False, hub=False,
+                  labels_dir='labels'):
     """ Return dataset statistics dictionary with images and instances counts per split per class
     To run in parent directory: export PYTHONPATH="$PWD/yolov5"
     Usage1: from utils.datasets import *; dataset_stats('coco128.yaml', autodownload=True)

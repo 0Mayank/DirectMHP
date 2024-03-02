@@ -8,21 +8,19 @@
 # base ----------------------------------------
 matplotlib>=3.2.2
 numpy>=1.18.5
-opencv-python>=4.1.2
-Pillow
+opencv-python>=4.9.0.80
+Pillow~=10.2.0
 PyYAML>=5.3.1
-scipy>=1.4.1
 torch>=1.7.0
 torchvision>=0.8.1
 tqdm>=4.41.0
 
 # logging -------------------------------------
-tensorboard>=2.4.1
-wandb
+wandb~=0.16.3
 
 # plotting ------------------------------------
 seaborn>=0.11.0
-pandas
+pandas~=2.2.1
 
 # export --------------------------------------
 # coremltools>=4.1
@@ -32,4 +30,6 @@ pandas
 # extras --------------------------------------
 # Cython  # for pycocotools https://github.com/cocodataset/cocoapi/issues/172
 # pycocotools>=2.0  # COCO mAP
-thop  # FLOPs computation
+thop~=0.1.1-2209072238
+requests~=2.31.0
+onnx~=1.15.0

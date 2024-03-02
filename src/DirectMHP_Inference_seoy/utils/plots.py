@@ -5,8 +5,8 @@ Plotting utils
 
 import math
 from copy import copy
-from pathlib import Path
 from math import cos, sin
+from pathlib import Path
 
 import cv2
 import matplotlib
@@ -17,8 +17,8 @@ import seaborn as sn
 import torch
 from PIL import Image, ImageDraw, ImageFont
 
-from utils.general import is_ascii, xyxy2xywh, xywh2xyxy
-from utils.metrics import fitness
+from general import is_ascii, xyxy2xywh, xywh2xyxy
+from metrics import fitness
 
 # Settings
 matplotlib.rc('font', **{'size': 11})
@@ -447,7 +447,7 @@ def plot_3axis_Zaxis(img, yaw, pitch, roll, tdx=None, tdy=None, size=50., limite
     p = pitch * np.pi / 180
     y = -(yaw * np.pi / 180)
     r = roll * np.pi / 180
-    
+
     if tdx != None and tdy != None:
         face_x = tdx
         face_y = tdy
@@ -459,11 +459,11 @@ def plot_3axis_Zaxis(img, yaw, pitch, roll, tdx=None, tdy=None, size=50., limite
     # X-Axis (pointing to right) drawn in red
     x1 = size * (cos(y) * cos(r)) + face_x
     y1 = size * (cos(p) * sin(r) + cos(r) * sin(p) * sin(y)) + face_y
-    
+
     # Y-Axis (pointing to down) drawn in green
     x2 = size * (-cos(y) * sin(r)) + face_x
     y2 = size * (cos(p) * cos(r) - sin(p) * sin(y) * sin(r)) + face_y
-    
+
     # Z-Axis (out of the screen) drawn in blue
     x3 = size * (sin(y)) + face_x
     y3 = size * (-cos(y) * sin(p)) + face_y
@@ -471,7 +471,7 @@ def plot_3axis_Zaxis(img, yaw, pitch, roll, tdx=None, tdy=None, size=50., limite
     # Plot head oritation line in black
     # scale_ratio = 5
     scale_ratio = 2
-    base_len = math.sqrt((face_x - x3)**2 + (face_y - y3)**2)
+    base_len = math.sqrt((face_x - x3) ** 2 + (face_y - y3) ** 2)
     if face_x == x3:
         endx = tdx
         if face_y < y3:
@@ -500,13 +500,13 @@ def plot_3axis_Zaxis(img, yaw, pitch, roll, tdx=None, tdy=None, size=50., limite
             endy = tdy - (face_y - y3) / (face_x - x3) * (tdx - endx)
     # cv2.line(img, (int(tdx), int(tdy)), (int(endx), int(endy)), (0,0,0), 2)
     # cv2.line(img, (int(tdx), int(tdy)), (int(endx), int(endy)), (255,255,0), 2)
-    cv2.line(img, (int(tdx), int(tdy)), (int(endx), int(endy)), (0,255,255), thickness)
+    cv2.line(img, (int(tdx), int(tdy)), (int(endx), int(endy)), (0, 255, 255), thickness)
 
     # X-Axis pointing to right. drawn in red
-    cv2.line(img, (int(face_x), int(face_y)), (int(x1),int(y1)),(0,0,255),thickness)
+    cv2.line(img, (int(face_x), int(face_y)), (int(x1), int(y1)), (0, 0, 255), thickness)
     # Y-Axis pointing to down. drawn in green    
-    cv2.line(img, (int(face_x), int(face_y)), (int(x2),int(y2)),(0,255,0),thickness)
+    cv2.line(img, (int(face_x), int(face_y)), (int(x2), int(y2)), (0, 255, 0), thickness)
     # Z-Axis (out of the screen) drawn in blue
-    cv2.line(img, (int(face_x), int(face_y)), (int(x3),int(y3)),(255,0,0),thickness)
+    cv2.line(img, (int(face_x), int(face_y)), (int(x3), int(y3)), (255, 0, 0), thickness)
 
     return img

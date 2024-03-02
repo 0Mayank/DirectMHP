@@ -7,8 +7,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from models.common import Conv
-from utils.downloads import attempt_download
+from common import Conv
+from ..utils.downloads import attempt_download
 
 
 class CrossConv(nn.Module):
@@ -86,7 +86,7 @@ class Ensemble(nn.ModuleList):
 
 
 def attempt_load(weights, map_location=None, inplace=True, fuse=True):
-    from models.yolo import Detect, Model
+    from yolo import Detect, Model
 
     # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
     model = Ensemble()
@@ -96,7 +96,6 @@ def attempt_load(weights, map_location=None, inplace=True, fuse=True):
             model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().fuse().eval())  # FP32 model
         else:
             model.append(ckpt['ema' if ckpt.get('ema') else 'model'].float().eval())  # without layer fuse
-
 
     # Compatibility updates
     for m in model.modules():
