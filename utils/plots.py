@@ -17,8 +17,8 @@ import seaborn as sn
 import torch
 from PIL import Image, ImageDraw, ImageFont
 
-from general import is_ascii, xyxy2xywh, xywh2xyxy
-from metrics import fitness
+from utils.general import is_ascii, xyxy2xywh, xywh2xyxy
+from utils.metrics import fitness
 
 # Settings
 matplotlib.rc('font', **{'size': 11})

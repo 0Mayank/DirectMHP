@@ -5,18 +5,27 @@ import torch
 
 from model import DirectMHPInfer
 from utils.torch_utils import select_device
-
+import utils.datasets
 
 def save_to_onnx(weights, device, conf_threshold=0.7, iou_threshold=0.45, channels=3, image_size=1280,
                  file_name="DirectMHP.onnx", opset=17):
     device = select_device(device=device, batch_size=1)
 
-    model = DirectMHPInfer(weights=weights, device=device, conf_threshold=conf_threshold,
+    model = DirectMHPInfer(weights=f"./{weights}", device=device, conf_threshold=conf_threshold,
                            iou_threshold=iou_threshold)
 
-    x = torch.randn(1, channels, image_size, image_size)
+    dataset = utils.datasets.LoadImages('img.jpg', 1280, int(model.model.stride.max()), auto=True)
+    diter = iter(dataset)
 
-    torch.onnx.export(model, x, f"{file_name}.onnx", export_params=True, opset_version=opset,
+    (p, img, im0, _) = next(diter)
+
+    img = torch.from_numpy(img).to(device=device)
+    img = img / 255.0
+
+    if len(img.shape) == 3:
+        img = img[None]
+
+    torch.onnx.export(model, img, f"{file_name}.onnx", export_params=True, opset_version=opset,
                       do_constant_folding=True, input_names=['input'], output_names=['output'],
                       dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}})
 
@@ -26,7 +35,7 @@ def save_to_onnx(weights, device, conf_threshold=0.7, iou_threshold=0.45, channe
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-w', '--weights', default='./weights/agora_m_best.pt', help='path to weights file')
+    parser.add_argument('-w', '--weights', default='weights/agora_m_best.pt', help='path to weights file')
     parser.add_argument('-d', '--device', default="cuda:0" if torch.cuda.is_available() else "cpu",
                         help='cuda device, i.e. 0 or cpu')
     parser.add_argument('-i', '--image-size', type=int, default=1280, help='size of input images')
