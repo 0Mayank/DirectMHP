@@ -24,3 +24,5 @@ if __name__ == '__main__':
     y = model(img)
 
     print(y[0][0])
+
+    torch.save(model.state_dict(), "../gesture-ease/weights.pt")
