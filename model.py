@@ -2,7 +2,6 @@ from torch import nn
 import numpy as np
 
 from models.experimental import attempt_load
-from utils.augmentations import letterbox
 from utils.general import non_max_suppression
 
 
@@ -23,15 +22,3 @@ class DirectMHPInfer(nn.Module):
             conf_thres=self.conf_threshold,
             iou_thres=self.iou_threshold,
         )
-
-    def preprocess(self, img: np.ndarray, new_img_size, stride, auto=True):
-        old_shape = img.shape
-
-        # padded resize
-        img = letterbox(im=img, new_shape=new_img_size, stride=stride, auto=auto)[0]
-
-        # convert
-        img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW
-        img = np.ascontiguousarray(img)
-
-        return img, old_shape

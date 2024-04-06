@@ -1,32 +1,47 @@
 import socket
-import io
 import struct
 import json
 
 import torch
-from PIL import Image
 import numpy as np
 
 from model import DirectMHPInfer
 from utils.general import scale_coords
+from utils.augmentations import letterbox
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = DirectMHPInfer(weights="weights/agora_m_best.pt", device=device)
+# opt_model = torch.compile(model, mode="default")
+opt_model = model
 
 config = {
     "process_id": "directmhp",
     "server_address": "/tmp/gesurease.sock",
-    "img_size": 640,
+    "img_size": 320,
     "stride": model.model.stride.max().item(),
     "prediction": ["x1", "y1", "x2", "y2", "conf", "class", "pitch", "yaw", "roll"],
 }
 
 
-def pred(img):
-    img = np.array(Image.open(io.BytesIO(img)).convert(mode="RGB"))
+def preprocess(img: np.ndarray, new_img_size, stride, auto=True):
+    old_shape = img.shape
 
-    img, old_shape = model.preprocess(img, config["img_size"], config["stride"])
+    # padded resize
+    img = letterbox(im=img, new_shape=new_img_size, stride=stride, auto=auto)[0]
+
+    # convert
+    img = img.transpose((2, 0, 1))[::-1]  # HWC to CHW
+    img = np.ascontiguousarray(img)
+
+    return img, old_shape
+
+
+def pred(img, w, h):
+    # img = np.array(Image.open(io.BytesIO(img)).convert(mode="RGB"))
+    img = np.frombuffer(img, np.uint8).reshape(3, h, w)
+
+    img, old_shape = preprocess(img, config["img_size"], config["stride"])
 
     img = torch.from_numpy(img).to(device=device)
     img = img / 255.0
@@ -34,7 +49,7 @@ def pred(img):
     img = img[None]
 
     start = time.time()
-    out = model(img)[0]
+    out = opt_model(img)[0]
     end = (time.time() - start) * 1000
 
     print(f"\t\tinference: {end:.1f} ms")
@@ -48,11 +63,15 @@ def pred(img):
 
 
 def run():
+    img_width_bytes = sock.recv(4)
+    img_height_bytes = sock.recv(4)
     data_len_bytes = sock.recv(4)
     if len(data_len_bytes) == 0:
         print("Connection closed, exiting...")
         exit(1)
 
+    img_width = struct.unpack("!I", img_width_bytes)[0]
+    img_height = struct.unpack("!I", img_height_bytes)[0]
     data_len = struct.unpack("!I", data_len_bytes)[0]
 
     start = time.time()
@@ -63,7 +82,7 @@ def run():
     # print(img)
 
     start2 = time.time()
-    preds = pred(img)
+    preds = pred(img, img_width, img_height)
     end2 = (time.time() - start2) * 1000
     sock.sendall(struct.pack("!I", len(preds)))
     sock.sendall(preds.encode())
