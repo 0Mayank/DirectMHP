@@ -9,6 +9,8 @@ from model import DirectMHPInfer
 from utils.general import scale_coords
 from utils.augmentations import letterbox
 
+import cv2
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = DirectMHPInfer(weights="weights/agora_m_best.pt", device=device)
@@ -39,7 +41,8 @@ def preprocess(img: np.ndarray, new_img_size, stride, auto=True):
 
 def pred(img, w, h):
     # img = np.array(Image.open(io.BytesIO(img)).convert(mode="RGB"))
-    img = np.frombuffer(img, np.uint8).reshape(3, h, w)
+    img = np.frombuffer(img, np.uint8).reshape(h, w, 3)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     img, old_shape = preprocess(img, config["img_size"], config["stride"])
 
@@ -52,7 +55,7 @@ def pred(img, w, h):
     out = opt_model(img)[0]
     end = (time.time() - start) * 1000
 
-    print(f"\t\tinference: {end:.1f} ms")
+    #print(f"\t\tinference: {end:.1f} ms")
 
     out[:, :4] = scale_coords(img.shape[2:], out[:, :4].clone().detach(), old_shape[:2])
 
@@ -87,8 +90,8 @@ def run():
     sock.sendall(struct.pack("!I", len(preds)))
     sock.sendall(preds.encode())
     end = (time.time() - start) * 1000
-    print(f"\tipc time: {end - end2:.1f} ms")
-    print(f"duration: {end:.1f} ms")
+ #   print(f"\tipc time: {end - end2:.1f} ms")
+  #  print(f"duration: {end:.1f} ms")
 
 
 if __name__ == "__main__":
