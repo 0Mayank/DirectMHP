@@ -23,6 +23,7 @@ config = {
     "img_size": 320,
     "stride": model.model.stride.max().item(),
     "prediction": ["x1", "y1", "x2", "y2", "conf", "class", "pitch", "yaw", "roll"],
+    "debug": False,
 }
 
 
@@ -39,6 +40,18 @@ def preprocess(img: np.ndarray, new_img_size, stride, auto=True):
     return img, old_shape
 
 
+def to_radiants(pitch_yaw_roll: np.ndarray):
+    from math import pi
+
+    if pitch_yaw_roll.shape[0] < 1:
+        return pitch_yaw_roll
+
+    shifter = np.array([-0.5, -0.5, -0.5]).reshape(1, 3)
+    pier = np.array([pi, 2 * pi, pi]).reshape(1, 3)
+
+    return (pitch_yaw_roll - shifter) * pier
+
+
 def pred(img, w, h):
     # img = np.array(Image.open(io.BytesIO(img)).convert(mode="RGB"))
     img = np.frombuffer(img, np.uint8).reshape(h, w, 3)
@@ -51,13 +64,17 @@ def pred(img, w, h):
 
     img = img[None]
 
-    start = time.time()
-    out = opt_model(img)[0]
-    end = (time.time() - start) * 1000
+    if config["debug"]:
+        start = time.time()
+        out = opt_model(img)[0]
+        end = (time.time() - start) * 1000
 
-    #print(f"\t\tinference: {end:.1f} ms")
+        print(f"\t\tinference: {end:.1f} ms")
+    else:
+        out = opt_model(img)[0]
 
     out[:, :4] = scale_coords(img.shape[2:], out[:, :4].clone().detach(), old_shape[:2])
+    out[:, 6:] = to_radiants(out[:, 6:])
 
     out = [t.cpu().detach().numpy().tolist() for t in out]
     out = [dict(zip(config["prediction"], pred)) for pred in out]
@@ -77,21 +94,29 @@ def run():
     img_height = struct.unpack("!I", img_height_bytes)[0]
     data_len = struct.unpack("!I", data_len_bytes)[0]
 
-    start = time.time()
+    if config["debug"]:
+        start = time.time()
     img = sock.recv(data_len)
     while len(img) < data_len:
         img += sock.recv(data_len - len(img))
 
     # print(img)
 
-    start2 = time.time()
+    if config["debug"]:
+        start2 = time.time()
+
     preds = pred(img, img_width, img_height)
-    end2 = (time.time() - start2) * 1000
+
+    if config["debug"]:
+        end2 = (time.time() - start2) * 1000
+
     sock.sendall(struct.pack("!I", len(preds)))
     sock.sendall(preds.encode())
-    end = (time.time() - start) * 1000
- #   print(f"\tipc time: {end - end2:.1f} ms")
-  #  print(f"duration: {end:.1f} ms")
+
+    if config["debug"]:
+        end = (time.time() - start) * 1000
+        print(f"\tipc time: {end - end2:.1f} ms")
+        print(f"duration: {end:.1f} ms")
 
 
 if __name__ == "__main__":
