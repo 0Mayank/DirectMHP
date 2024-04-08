@@ -55,7 +55,6 @@ def to_radiants(pitch_yaw_roll: np.ndarray):
 def pred(img, w, h):
     # img = np.array(Image.open(io.BytesIO(img)).convert(mode="RGB"))
     img = np.frombuffer(img, np.uint8).reshape(h, w, 3)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     img, old_shape = preprocess(img, config["img_size"], config["stride"])
 
