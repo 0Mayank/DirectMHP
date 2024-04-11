@@ -43,13 +43,20 @@ def preprocess(img: np.ndarray, new_img_size, stride, auto=True):
 def to_radiants(pitch_yaw_roll: np.ndarray):
     from math import pi
 
+
     if pitch_yaw_roll.shape[0] < 1:
         return pitch_yaw_roll
 
-    shifter = np.array([-0.5, -0.5, -0.5]).reshape(1, 3)
-    pier = np.array([pi, 2 * pi, pi]).reshape(1, 3)
+    # shifter = np.array([-0.5, -0.5, -0.5]).reshape(1, 3)
+    # pier = np.array([pi, 2 * pi, pi]).reshape(1, 3)
 
-    return (pitch_yaw_roll - shifter) * pier
+    # return (pitch_yaw_roll - shifter) * pier
+    for i in range(pitch_yaw_roll.shape[0]):
+        pitch_yaw_roll[i, 0] = (pitch_yaw_roll[i, 0] - 0.5) * pi
+        pitch_yaw_roll[i, 1] = (pitch_yaw_roll[i, 1] - 0.5) * 2 * pi
+        pitch_yaw_roll[i, 2] = (pitch_yaw_roll[i, 2] - 0.5) * pi
+
+    return pitch_yaw_roll
 
 
 def pred(img, w, h):
